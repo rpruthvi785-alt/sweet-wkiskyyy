@@ -1,0 +1,17 @@
+id,name,category,description,price,image_path,is_bestseller
+1,Classic Vanilla Sponge,cakes,Light and airy layers filled with homemade strawberry jam and fresh vanilla bean whipped cream.,35.0,assets/images/vanilla.png,1
+2,Rustic Carrot Cake,cakes,"Moist gently spiced cake loaded with fresh carrots, topped with rich, tangy cream cheese frosting.",42.0,assets/images/carrot.png,0
+3,Fudge Chocolate Brownies,cakes,"Decadent, gooey centers with a perfectly crackled top, made with 70% dark Belgian chocolate.",28.0,assets/images/brownies.png,0
+4,Luxurious Red Velvet,cakes,"A rich, ruby-colored chocolate sponge layered generously with our signature tangy cream cheese frosting.",45.0,assets/images/red_velvet.png,0
+5,Bright Lemon Drizzle,cakes,"A zesty, buttery sponge soaked in fresh lemon syrup and baked to golden perfection with a candied peel.",38.0,assets/images/lemon_drizzle.png,0
+6,Black Forest Gateau,cakes,"Classic dark chocolate sponge, kirsch-infused cherries, and whipped cream, finished with chocolate shavings.",50.0,assets/images/black_forest.png,0
+7,Chocolate Chip Cookies,snacks,"Gooey, warm, and loaded with dark chocolate chunks. Perfectly crisp edges with a soft, chewy center.",12.0,assets/images/cookie.png,0
+8,Butter Croissant,snacks,"Flaky, golden, and incredibly buttery. Baked fresh every morning for the perfect shattering crunch.",4.5,assets/images/croissant.png,0
+9,Glazed Fruit Tart,desserts,Crispy shortcrust pastry filled with silky vanilla cream and topped with fresh seasonal berries.,18.0,assets/images/fruit_tart.png,0
+10,Creamy Panna Cotta,desserts,Silky smooth Italian cream dessert infused with vanilla bean and topped with a fresh raspberry coulis.,8.5,assets/images/panna_cotta.png,0
+11,Wild Berry Scone,snacks,"Buttery, crumbly scone packed with wild blueberries and raspberries, finished with a sweet sugar glaze.",5.25,https://images.unsplash.com/photo-1544945582-132d0c78a05e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80,0
+12,Savory Spinach & Feta,snacks,"A warm, savory muffin with fresh garden spinach and tangy Greek feta cheese. The perfect morning snack.",6.0,https://images.unsplash.com/photo-1557925923-33b27f891f88?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80,0
+13,Glazed Cinnamon Roll,snacks,"Soft, pillowy dough swirled with aromatic cinnamon and topped with a generous vanilla cream cheese glaze.",4.5,https://images.unsplash.com/photo-1509365465985-25d11c17e812?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80,0
+14,Savory Cheese Straws,snacks,"Crispy, flaky puff pastry twists baked with aged cheddar cheese and a hint of smoked paprika for a perfect crunch.",8.0,https://images.unsplash.com/photo-1619860860774-1e2e17343432?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80,0
+15,Classic Tiramisu,desserts,Traditional Italian pick-me-up with espresso-soaked ladyfingers and whipped mascarpone cream.,9.5,assets/images/tiramisu.png,0
+16,Assorted Macaron Set,desserts,An elegant set of six delicate French macarons with assorted cream and white chocolate ganache fillings.,18.0,https://images.unsplash.com/photo-1569864358642-9d16197029c8?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80,0
