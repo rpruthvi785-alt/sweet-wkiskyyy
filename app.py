@@ -34,7 +34,8 @@ def init_db():
             quantity INTEGER NOT NULL,
             order_type TEXT DEFAULT 'dine-in',
             status TEXT DEFAULT 'received',
-            ordered_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            ordered_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            custom_details TEXT
         )
     ''')
     conn.commit()
@@ -102,9 +103,9 @@ def checkout():
         conn = get_db_connection()
         for item in cart:
             conn.execute('''
-                INSERT INTO orders (username, product_name, price, quantity, order_type, status)
-                VALUES (?, ?, ?, ?, ?, ?)
-            ''', (username, item['name'], item['price'], item['quantity'], order_type, 'baking'))
+                INSERT INTO orders (username, product_name, price, quantity, order_type, status, custom_details)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (username, item['name'], item['price'], item['quantity'], order_type, 'baking', item.get('details', '')))
         conn.commit()
         conn.close()
         return jsonify({"success": True, "message": "Order history updated!"})
@@ -153,4 +154,4 @@ def export_csv():
     }
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='127.0.0.1', port=5050)

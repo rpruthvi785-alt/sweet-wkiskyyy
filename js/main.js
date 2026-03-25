@@ -92,6 +92,11 @@ const historyModal = document.getElementById('history-modal');
 const historyItemsContainer = document.getElementById('history-items');
 const closeHistory = document.getElementById('close-history');
 const btnCloseHistoryUI = document.getElementById('btn-close-history-ui');
+const btnMakeOwn = document.getElementById('btn-make-own');
+const customModal = document.getElementById('custom-modal');
+const closeCustom = document.getElementById('close-custom');
+const customCakeForm = document.getElementById('custom-cake-form');
+const customPriceDisplay = document.getElementById('custom-price-display');
 
 /*=============== MODAL HELPERS ===============*/
 const openModal = (modal) => modal.classList.add('show-modal');
@@ -214,6 +219,7 @@ function updateCartUI() {
                 <div class="cart-item" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 0.75rem; margin-bottom: 0.75rem;">
                     <div style="flex: 1;">
                         <span style="font-weight: 600;">${item.name}</span><br>
+                        ${item.details ? `<span style="font-size: 0.75rem; color: #666; display: block; margin-bottom: 0.25rem;">${item.details}</span>` : ''}
                         <span style="color: var(--text-color-light); font-size: 0.9rem;">$${item.price.toFixed(2)} each</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 0.5rem;">
@@ -343,6 +349,53 @@ closeSignup.addEventListener('click', () => closeModal(signupModal));
 closeCart.addEventListener('click', () => closeModal(cartModal));
 closeHistory.addEventListener('click', () => closeModal(historyModal));
 btnCloseHistoryUI.addEventListener('click', () => closeModal(historyModal));
+if (closeCustom) closeCustom.addEventListener('click', () => closeModal(customModal));
+if (btnMakeOwn) btnMakeOwn.addEventListener('click', () => openModal(customModal));
+if (customCakeForm) {
+    const updateCustomPrice = () => {
+        const flavorPrice = parseFloat(document.getElementById('custom-flavor').selectedOptions[0].getAttribute('data-price'));
+        const sizeMultiplier = parseFloat(document.getElementById('custom-size').selectedOptions[0].getAttribute('data-multiplier'));
+        
+        let extras = 0;
+        document.querySelectorAll('input[name="topping"]:checked').forEach(cb => {
+            extras += parseFloat(cb.getAttribute('data-price'));
+        });
+        
+        const frostingPrice = parseFloat(document.querySelector('input[name="frosting"]:checked').getAttribute('data-price'));
+        extras += frostingPrice;
+        
+        const totalPrice = (flavorPrice * sizeMultiplier) + extras;
+        customPriceDisplay.textContent = totalPrice.toFixed(2);
+        return totalPrice;
+    };
+
+    customCakeForm.addEventListener('change', updateCustomPrice);
+    btnMakeOwn.addEventListener('click', updateCustomPrice); // Initial price set
+
+    customCakeForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const flavor = document.getElementById('custom-flavor').value;
+        const size = document.getElementById('custom-size').value;
+        const frosting = document.querySelector('input[name="frosting"]:checked').value;
+        const toppings = Array.from(document.querySelectorAll('input[name="topping"]:checked')).map(cb => cb.value);
+        const message = document.getElementById('custom-message').value;
+        const price = updateCustomPrice();
+
+        const details = `Flavor: ${flavor}, Size: ${size}, Frosting: ${frosting}${toppings.length ? `, Toppings: ${toppings.join(', ')}` : ''}${message ? `, Msg: "${message}"` : ''}`;
+        
+        state.cart.push({
+            name: "Custom Cake",
+            price: price,
+            quantity: 1,
+            details: details
+        });
+
+        updateCartUI();
+        closeModal(customModal);
+        customCakeForm.reset();
+        alert("Custom cake added to cart!");
+    });
+}
 if(closeConfirm) closeConfirm.addEventListener('click', () => closeModal(confirmModal));
 if(btnContinue) btnContinue.addEventListener('click', () => closeModal(confirmModal));
 
@@ -355,6 +408,7 @@ window.addEventListener('click', (e) => {
     if (e.target === cartModal) closeModal(cartModal);
     if (e.target === historyModal) closeModal(historyModal);
     if (e.target === confirmModal) closeModal(confirmModal);
+    if (e.target === customModal) closeModal(customModal);
 });
 
 // Forms

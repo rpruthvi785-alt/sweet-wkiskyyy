@@ -127,6 +127,10 @@
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11c0 2.2 1.8 4 4 4h2c2.2 0 4-1.8 4-4V5H7v6Z"></path><path d="M19 10.5V11a7 7 0 0 1-14 0v-.5"></path><path d="M12 15v6"></path><path d="M8 21h8"></path></svg>
                         Desserts
                     </button>
+                    <button class="btn btn-primary" id="btn-make-own" style="background-color: var(--sec-color); border-color: var(--sec-color);">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem;"><path d="M12 5v14M5 12h14"></path></svg>
+                        Create Your Own
+                    </button>
                 </div>
 
                 <div class="menu-grid">
@@ -294,6 +298,80 @@
 
             <div class="cart-total">Total: $<span id="cart-total-price">0.00</span></div>
             <button class="btn btn-primary" style="width: 100%" id="btn-checkout">Checkout</button>
+        </div>
+    </div>
+
+    <!-- Custom Cake Modal -->
+    <div class="modal" id="custom-modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="modal-close" id="close-custom">&times;</span>
+            <h2 class="modal-title">Create Your Own Cake</h2>
+            <form id="custom-cake-form">
+                <div class="custom-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                    <div class="form-group">
+                        <label>Base Flavor</label>
+                        <select id="custom-flavor" class="form-control" required style="width:100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 4px;">
+                            <option value="Chocolate" data-price="15">Chocolate ($15.00)</option>
+                            <option value="Vanilla" data-price="12">Vanilla ($12.00)</option>
+                            <option value="Red Velvet" data-price="18">Red Velvet ($18.00)</option>
+                            <option value="Strawberry" data-price="14">Strawberry ($14.00)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Cake Size</label>
+                        <select id="custom-size" class="form-control" required style="width:100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 4px;">
+                            <option value="Small" data-multiplier="1">Small (6")</option>
+                            <option value="Medium" data-multiplier="1.5">Medium (8") +50%</option>
+                            <option value="Large" data-multiplier="2">Large (10") +100%</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Toppings (Select Multiple)</label>
+                    <div class="toppings-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; background: #f9f9f9; padding: 1rem; border-radius: 8px;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" name="topping" value="Sprinkles" data-price="2"> Sprinkles (+$2.00)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" name="topping" value="Fresh Fruits" data-price="5"> Fresh Fruits (+$5.00)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" name="topping" value="Choco Chips" data-price="3"> Choco Chips (+$3.00)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" name="topping" value="Caramel Drizzle" data-price="4"> Caramel Drizzle (+$4.00)
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Frosting Type</label>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <label style="display: flex; align-items: center; gap: 0.3rem; cursor: pointer;">
+                            <input type="radio" name="frosting" value="Buttercream" checked data-price="0"> Buttercream
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.3rem; cursor: pointer;">
+                            <input type="radio" name="frosting" value="Cream Cheese" data-price="3"> Cream Cheese (+$3.00)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.3rem; cursor: pointer;">
+                            <input type="radio" name="frosting" value="Ganache" data-price="5"> Ganache (+$5.00)
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Message on Cake (Optional)</label>
+                    <input type="text" id="custom-message" placeholder="e.g., Happy Birthday!" maxlength="30" style="width:100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+
+                <div style="margin-top: 2rem; padding: 1rem; border-top: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-size: 1.25rem; font-weight: 700; color: var(--primary-color);">
+                        Price: $<span id="custom-price-display">0.00</span>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Custom Cake to Cart</button>
+                </div>
+            </form>
         </div>
     </div>
 
