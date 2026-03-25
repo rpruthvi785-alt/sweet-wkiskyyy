@@ -61,6 +61,56 @@ const state = {
     filter: 'all'
 };
 
+/*=============== LOCAL STORAGE DB (works on GitHub Pages) ===============*/
+const db = {
+    getUsers: () => JSON.parse(localStorage.getItem('bakery-users') || '{}'),
+    saveUsers: (u) => localStorage.setItem('bakery-users', JSON.stringify(u)),
+    getOrders: () => JSON.parse(localStorage.getItem('bakery-orders') || '[]'),
+    saveOrders: (o) => localStorage.setItem('bakery-orders', JSON.stringify(o)),
+
+    signup(username, email, password) {
+        const users = this.getUsers();
+        if (users[username]) return { success: false, message: 'Username already exists' };
+        const byEmail = Object.values(users).find(u => u.email === email);
+        if (byEmail) return { success: false, message: 'Email already registered' };
+        users[username] = { email, password };
+        this.saveUsers(users);
+        return { success: true, user: username };
+    },
+
+    login(username, password) {
+        const users = this.getUsers();
+        if (!users[username] || users[username].password !== password)
+            return { success: false, message: 'Invalid username or password' };
+        return { success: true, user: username };
+    },
+
+    checkout(username, cart, orderType) {
+        const orders = this.getOrders();
+        const now = new Date().toISOString();
+        cart.forEach(item => {
+            orders.push({
+                username,
+                product_name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+                order_type: orderType,
+                status: 'baking',
+                ordered_at: now,
+                custom_details: item.details || ''
+            });
+        });
+        this.saveOrders(orders);
+        return { success: true };
+    },
+
+    history(username) {
+        return this.getOrders()
+            .filter(o => o.username === username)
+            .sort((a, b) => new Date(b.ordered_at) - new Date(a.ordered_at));
+    }
+};
+
 /*=============== ELEMENTS ===============*/
 const menuGrid = document.querySelector('.menu-grid');
 const filterBtns = document.querySelectorAll('.filter-btn');
@@ -122,85 +172,74 @@ function updateAuthUI() {
     }
 }
 
-async function updateHistoryUI() {
+function updateHistoryUI() {
     if (!state.user) return;
-    try {
-        const response = await fetch(`/api/history?user=${state.user}`);
-        const history = await response.json();
-        
-        if (history.length === 0) {
-            historyItemsContainer.innerHTML = '<p style="color: gray; text-align: center; padding: 1rem;">No history found yet. Time to buy some cake!</p>';
-        } else {
-            historyItemsContainer.innerHTML = history.map(item => `
-                <div class="history-item" style="padding: 1rem; border-bottom: 1px solid #eee;">
-                    <div style="display: flex; justify-content: space-between;">
-                        <strong style="color: var(--primary-color);">${item.product_name}</strong>
-                        <span>$${(item.price * item.quantity).toFixed(2)}</span>
-                    </div>
-                    <div style="font-size: 0.85rem; color: gray; margin-top: 0.25rem;">
-                        Qty: ${item.quantity} | ${new Date(item.ordered_at).toLocaleDateString()}
-                    </div>
+    const history = db.history(state.user);
+    if (history.length === 0) {
+        historyItemsContainer.innerHTML = '<p style="color: gray; text-align: center; padding: 1rem;">No history found yet. Time to buy some cake!</p>';
+    } else {
+        historyItemsContainer.innerHTML = history.map(item => `
+            <div class="history-item" style="padding: 1rem; border-bottom: 1px solid #eee;">
+                <div style="display: flex; justify-content: space-between;">
+                    <strong style="color: var(--primary-color);">${item.product_name}</strong>
+                    <span>$${(item.price * item.quantity).toFixed(2)}</span>
                 </div>
-            `).join('');
-        }
-    } catch (err) {
-        console.error("History fetch failed:", err);
+                <div style="font-size: 0.85rem; color: gray; margin-top: 0.25rem;">
+                    Qty: ${item.quantity} | ${new Date(item.ordered_at).toLocaleDateString()}
+                </div>
+            </div>
+        `).join('');
     }
 }
 
-async function updateTrackingUI() {
+function updateTrackingUI() {
     if (!state.user) return;
-    try {
-        const response = await fetch(`/api/history?user=${state.user}`);
-        const history = await response.json();
-        const trackingDisplay = document.getElementById('tracking-display');
-        
-        if (history.length === 0) {
-            trackingDisplay.innerHTML = '<p style="color: gray; text-align: center;">No active orders to track. Go get some cake!</p>';
-        } else {
-            // Show only orders from the last 2 hours as "active" for tracking
-            const now = new Date();
-            const activeOrders = history.filter(order => {
-                const orderTime = new Date(order.ordered_at);
-                return (now - orderTime) < (2 * 60 * 60 * 1000); 
-            });
+    const history = db.history(state.user);
+    const trackingDisplay = document.getElementById('tracking-display');
 
-            if (activeOrders.length === 0) {
-                trackingDisplay.innerHTML = '<p style="color: gray; text-align: center;">Current orders are complete. View History for older bakes.</p>';
-            } else {
-                trackingDisplay.innerHTML = activeOrders.map(order => {
-                    const orderTime = new Date(order.ordered_at);
-                    const secondsElapsed = (now - orderTime) / 1000;
-                    // SIMULATOR: If order is < 30s old, force 'baking'. If older, force 'delivered' for demo.
-                    const displayStatus = secondsElapsed > 30 ? 'delivered' : order.status;
-
-                    return `
-                    <div class="tracking-item" style="margin-bottom: 2rem; border-bottom: 1px solid #eee; padding-bottom: 1.5rem;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
-                            <h4 style="color: var(--sec-color); margin:0;">${order.product_name}</h4>
-                            <span class="badge" style="background: var(--primary-color); color: #fff; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.8rem; text-transform: uppercase;">${order.order_type}</span>
-                        </div>
-                        
-                        <div class="status-stepper" style="display: flex; justify-content: space-between; position: relative; margin-top: 1rem;">
-                             <div style="text-align: center; flex: 1;">
-                                <div style="width: 20px; height: 20px; background: var(--primary-color); border-radius: 50%; margin: 0 auto;"></div>
-                                <p style="font-size: 0.7rem; margin-top: 0.5rem; color: var(--primary-color); font-weight: bold;">Baking</p>
-                             </div>
-                             <div style="text-align: center; flex: 1;">
-                                <div style="width: 20px; height: 20px; background: ${displayStatus === 'delivered' ? 'var(--primary-color)' : '#ccc'}; border-radius: 50%; margin: 0 auto; transition: background 0.5s ease;"></div>
-                                <p style="font-size: 0.7rem; margin-top: 0.5rem; color: ${displayStatus === 'delivered' ? 'var(--primary-color)' : '#999'}; ${displayStatus === 'delivered' ? 'font-weight: bold;' : ''}">
-                                    ${order.order_type === 'delivery' ? 'Out for Delivery' : 'Ready to Serve'}
-                                </p>
-                             </div>
-                        </div>
-                        ${displayStatus === 'baking' ? `<p style="font-size: 0.75rem; color: #666; text-align: center; margin-top: 1rem;">Estimated time: ${Math.max(0, Math.floor(30 - secondsElapsed))}s remaining...</p>` : ''}
-                    </div>
-                `}).join('');
-            }
-        }
-    } catch (err) {
-        console.error("Tracking update failed:", err);
+    if (history.length === 0) {
+        trackingDisplay.innerHTML = '<p style="color: gray; text-align: center;">No active orders to track. Go get some cake!</p>';
+        return;
     }
+
+    const now = new Date();
+    const activeOrders = history.filter(order => {
+        const orderTime = new Date(order.ordered_at);
+        return (now - orderTime) < (2 * 60 * 60 * 1000);
+    });
+
+    if (activeOrders.length === 0) {
+        trackingDisplay.innerHTML = '<p style="color: gray; text-align: center;">Current orders are complete. View History for older bakes.</p>';
+        return;
+    }
+
+    trackingDisplay.innerHTML = activeOrders.map(order => {
+        const orderTime = new Date(order.ordered_at);
+        const secondsElapsed = (now - orderTime) / 1000;
+        const displayStatus = secondsElapsed > 30 ? 'delivered' : order.status;
+
+        return `
+        <div class="tracking-item" style="margin-bottom: 2rem; border-bottom: 1px solid #eee; padding-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                <h4 style="color: var(--sec-color); margin:0;">${order.product_name}</h4>
+                <span class="badge" style="background: var(--primary-color); color: #fff; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.8rem; text-transform: uppercase;">${order.order_type}</span>
+            </div>
+            <div class="status-stepper" style="display: flex; justify-content: space-between; position: relative; margin-top: 1rem;">
+                <div style="text-align: center; flex: 1;">
+                    <div style="width: 20px; height: 20px; background: var(--primary-color); border-radius: 50%; margin: 0 auto;"></div>
+                    <p style="font-size: 0.7rem; margin-top: 0.5rem; color: var(--primary-color); font-weight: bold;">Baking</p>
+                </div>
+                <div style="text-align: center; flex: 1;">
+                    <div style="width: 20px; height: 20px; background: ${displayStatus === 'delivered' ? 'var(--primary-color)' : '#ccc'}; border-radius: 50%; margin: 0 auto; transition: background 0.5s ease;"></div>
+                    <p style="font-size: 0.7rem; margin-top: 0.5rem; color: ${displayStatus === 'delivered' ? 'var(--primary-color)' : '#999'}; ${displayStatus === 'delivered' ? 'font-weight: bold;' : ''}">
+                        ${order.order_type === 'delivery' ? 'Out for Delivery' : 'Ready to Serve'}
+                    </p>
+                </div>
+            </div>
+            ${displayStatus === 'baking' ? `<p style="font-size: 0.75rem; color: #666; text-align: center; margin-top: 1rem;">Estimated time: ${Math.max(0, Math.floor(30 - secondsElapsed))}s remaining...</p>` : ''}
+        </div>
+        `;
+    }).join('');
 }
 
 function updateCartUI() {
@@ -412,102 +451,80 @@ window.addEventListener('click', (e) => {
 });
 
 // Forms
-loginForm.addEventListener('submit', async (e) => {
+loginForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const username = document.getElementById('login-username').value;
+    const username = document.getElementById('login-username').value.trim();
     const password = document.getElementById('login-password').value;
     loginError.style.display = 'none';
-    
-    try {
-        const response = await fetch('/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-        });
-        const result = await response.json();
-        if (result.success) {
-            state.user = result.user;
-            localStorage.setItem('bakery-user', state.user);
-            updateAuthUI();
-            closeModal(loginModal);
-            loginForm.reset();
-        } else {
-            loginError.textContent = result.message;
-            loginError.style.display = 'block';
-        }
-    } catch (err) {
-        loginError.textContent = "Server error. Is the backend running?";
+
+    const result = db.login(username, password);
+    if (result.success) {
+        state.user = result.user;
+        localStorage.setItem('bakery-user', state.user);
+        updateAuthUI();
+        closeModal(loginModal);
+        loginForm.reset();
+    } else {
+        loginError.textContent = result.message;
         loginError.style.display = 'block';
     }
 });
 
-signupForm.addEventListener('submit', async (e) => {
+signupForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const username = document.getElementById('signup-username').value;
-    const email = document.getElementById('signup-email').value;
+    const username = document.getElementById('signup-username').value.trim();
+    const email = document.getElementById('signup-email').value.trim();
     const password = document.getElementById('signup-password').value;
     signupError.style.display = 'none';
-    
-    try {
-        const response = await fetch('/api/signup', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, email, password })
-        });
-        const result = await response.json();
-        if (result.success) {
-            state.user = result.user;
-            localStorage.setItem('bakery-user', state.user);
-            updateAuthUI();
-            closeModal(signupModal);
-            signupForm.reset();
-            alert("Account created successfully!");
-        } else {
-            signupError.textContent = result.message;
-            signupError.style.display = 'block';
-        }
-    } catch (err) {
-        signupError.textContent = "Server error. Is the backend running?";
+
+    if (!username || !email || !password) {
+        signupError.textContent = 'All fields are required.';
+        signupError.style.display = 'block';
+        return;
+    }
+
+    const result = db.signup(username, email, password);
+    if (result.success) {
+        state.user = result.user;
+        localStorage.setItem('bakery-user', state.user);
+        updateAuthUI();
+        closeModal(signupModal);
+        signupForm.reset();
+        alert('Account created successfully!');
+    } else {
+        signupError.textContent = result.message;
         signupError.style.display = 'block';
     }
 });
 
-btnCheckout.addEventListener('click', async () => {
-    if (state.cart.length === 0) return alert("Your cart is empty.");
+btnCheckout.addEventListener('click', () => {
+    if (state.cart.length === 0) return alert('Your cart is empty.');
     if (!state.user) {
-        alert("Please sign in to place an order.");
+        alert('Please sign in to place an order.');
         closeModal(cartModal);
         openModal(loginModal);
         return;
     }
-    
-    const orderType = document.querySelector('input[name="order-type"]:checked').value;
-    
-    try {
-        const response = await fetch('/api/checkout', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user: state.user, cart: state.cart, type: orderType })
-        });
-        const result = await response.json();
-        
-        if (result.success) {
-            state.cart = [];
-            updateCartUI();
-            updateTrackingUI();
-            closeModal(cartModal);
-            openModal(confirmModal);
 
-            // SIMULATOR: Auto-refresh every second for 35s to show countdown and final state
-            let ticks = 0;
-            const liveRefresh = setInterval(() => {
-                updateTrackingUI();
-                ticks++;
-                if (ticks > 35) clearInterval(liveRefresh);
-            }, 1000);
-        }
-    } catch (err) {
-        alert("Checkout failed. Please try again.");
+    const orderType = document.querySelector('input[name="order-type"]:checked').value;
+    const result = db.checkout(state.user, state.cart, orderType);
+
+    if (result.success) {
+        state.cart = [];
+        updateCartUI();
+        updateTrackingUI();
+        closeModal(cartModal);
+        openModal(confirmModal);
+
+        // SIMULATOR: Auto-refresh every second for 35s to show countdown and final state
+        let ticks = 0;
+        const liveRefresh = setInterval(() => {
+            updateTrackingUI();
+            ticks++;
+            if (ticks > 35) clearInterval(liveRefresh);
+        }, 1000);
+    } else {
+        alert('Checkout failed. Please try again.');
     }
 });
 
