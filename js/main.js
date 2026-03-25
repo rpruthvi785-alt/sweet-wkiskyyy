@@ -307,7 +307,7 @@ function renderProducts() {
 /*=============== DATA FETCHING ===============*/
 async function fetchProducts() {
     try {
-        const response = await fetch('/api/products');
+        const response = await fetch('products.json');
         state.products = await response.json();
         renderProducts();
     } catch (err) {

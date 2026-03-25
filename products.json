@@ -1,0 +1,146 @@
+[
+  {
+    "id": 1,
+    "name": "Classic Vanilla Sponge",
+    "category": "cakes",
+    "description": "Light and airy layers filled with homemade strawberry jam and fresh vanilla bean whipped cream.",
+    "price": 35.0,
+    "image_path": "assets/images/vanilla.png",
+    "is_bestseller": 1
+  },
+  {
+    "id": 2,
+    "name": "Rustic Carrot Cake",
+    "category": "cakes",
+    "description": "Moist gently spiced cake loaded with fresh carrots, topped with rich, tangy cream cheese frosting.",
+    "price": 42.0,
+    "image_path": "assets/images/carrot.png",
+    "is_bestseller": 0
+  },
+  {
+    "id": 3,
+    "name": "Fudge Chocolate Brownies",
+    "category": "cakes",
+    "description": "Decadent, gooey centers with a perfectly crackled top, made with 70% dark Belgian chocolate.",
+    "price": 28.0,
+    "image_path": "assets/images/brownies.png",
+    "is_bestseller": 0
+  },
+  {
+    "id": 4,
+    "name": "Luxurious Red Velvet",
+    "category": "cakes",
+    "description": "A rich, ruby-colored chocolate sponge layered generously with our signature tangy cream cheese frosting.",
+    "price": 45.0,
+    "image_path": "assets/images/red_velvet.png",
+    "is_bestseller": 0
+  },
+  {
+    "id": 5,
+    "name": "Bright Lemon Drizzle",
+    "category": "cakes",
+    "description": "A zesty, buttery sponge soaked in fresh lemon syrup and baked to golden perfection with a candied peel.",
+    "price": 38.0,
+    "image_path": "assets/images/lemon_drizzle.png",
+    "is_bestseller": 0
+  },
+  {
+    "id": 6,
+    "name": "Black Forest Gateau",
+    "category": "cakes",
+    "description": "Classic dark chocolate sponge, kirsch-infused cherries, and whipped cream, finished with chocolate shavings.",
+    "price": 50.0,
+    "image_path": "assets/images/black_forest.png",
+    "is_bestseller": 0
+  },
+  {
+    "id": 7,
+    "name": "Chocolate Chip Cookies",
+    "category": "snacks",
+    "description": "Gooey, warm, and loaded with dark chocolate chunks. Perfectly crisp edges with a soft, chewy center.",
+    "price": 12.0,
+    "image_path": "assets/images/cookie.png",
+    "is_bestseller": 0
+  },
+  {
+    "id": 8,
+    "name": "Butter Croissant",
+    "category": "snacks",
+    "description": "Flaky, golden, and incredibly buttery. Baked fresh every morning for the perfect shattering crunch.",
+    "price": 4.5,
+    "image_path": "assets/images/croissant.png",
+    "is_bestseller": 0
+  },
+  {
+    "id": 9,
+    "name": "Glazed Fruit Tart",
+    "category": "desserts",
+    "description": "Crispy shortcrust pastry filled with silky vanilla cream and topped with fresh seasonal berries.",
+    "price": 18.0,
+    "image_path": "assets/images/fruit_tart.png",
+    "is_bestseller": 0
+  },
+  {
+    "id": 10,
+    "name": "Creamy Panna Cotta",
+    "category": "desserts",
+    "description": "Silky smooth Italian cream dessert infused with vanilla bean and topped with a fresh raspberry coulis.",
+    "price": 8.5,
+    "image_path": "assets/images/panna_cotta.png",
+    "is_bestseller": 0
+  },
+  {
+    "id": 11,
+    "name": "Wild Berry Scone",
+    "category": "snacks",
+    "description": "Buttery, crumbly scone packed with wild blueberries and raspberries, finished with a sweet sugar glaze.",
+    "price": 5.25,
+    "image_path": "assets/images/wild_berry_scone.png",
+    "is_bestseller": 0
+  },
+  {
+    "id": 12,
+    "name": "Savory Spinach & Feta",
+    "category": "snacks",
+    "description": "A warm, savory muffin with fresh garden spinach and tangy Greek feta cheese. The perfect morning snack.",
+    "price": 6.0,
+    "image_path": "assets/images/savory_spinach___feta.png",
+    "is_bestseller": 0
+  },
+  {
+    "id": 13,
+    "name": "Glazed Cinnamon Roll",
+    "category": "snacks",
+    "description": "Soft, pillowy dough swirled with aromatic cinnamon and topped with a generous vanilla cream cheese glaze.",
+    "price": 4.5,
+    "image_path": "assets/images/glazed_cinnamon_roll.png",
+    "is_bestseller": 0
+  },
+  {
+    "id": 14,
+    "name": "Savory Cheese Straws",
+    "category": "snacks",
+    "description": "Crispy, flaky puff pastry twists baked with aged cheddar cheese and a hint of smoked paprika for a perfect crunch.",
+    "price": 8.0,
+    "image_path": "assets/images/savory_cheese_straws.png",
+    "is_bestseller": 0
+  },
+  {
+    "id": 15,
+    "name": "Classic Tiramisu",
+    "category": "desserts",
+    "description": "Traditional Italian pick-me-up with espresso-soaked ladyfingers and whipped mascarpone cream.",
+    "price": 9.5,
+    "image_path": "assets/images/tiramisu.png",
+    "is_bestseller": 0
+  },
+  {
+    "id": 16,
+    "name": "Assorted Macaron Set",
+    "category": "desserts",
+    "description": "An elegant set of six delicate French macarons with assorted cream and white chocolate ganache fillings.",
+    "price": 18.0,
+    "image_path": "assets/images/assorted_macaron_set.png",
+    "is_bestseller": 0
+  }
+]
