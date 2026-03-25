@@ -38,6 +38,18 @@ def init_db():
             custom_details TEXT
         )
     ''')
+    # Create products table
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            category TEXT,
+            description TEXT,
+            price REAL,
+            image_path TEXT,
+            is_bestseller INTEGER DEFAULT 0
+        )
+    ''')
     conn.commit()
     conn.close()
 
