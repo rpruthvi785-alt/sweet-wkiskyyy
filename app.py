@@ -39,6 +39,11 @@ def init_db():
         )
     ''')
     # Create products table
+    try:
+        conn.execute("ALTER TABLE orders ADD COLUMN custom_details TEXT")
+    except sqlite3.OperationalError:
+        pass
+
     conn.execute('''
         CREATE TABLE IF NOT EXISTS products (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
