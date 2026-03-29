@@ -34,7 +34,12 @@ def migrate_table(table_name):
         print(f"Warning: Failed to read local table {table_name}. {e}")
         return
         
-    records = [dict(r) for r in rows]
+    records = []
+    for r in rows:
+        d = dict(r)
+        if 'id' in d:
+            del d['id'] # Remove local ID to let Supabase generate its own sequence correctly
+        records.append(d)
     conn.close()
 
     if not records:
