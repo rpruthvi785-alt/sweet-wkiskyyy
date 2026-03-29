@@ -30,11 +30,10 @@ def get_products():
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.json
-    username = data.get('username')
+    username = data.get('username', '').lower().strip()
     password = data.get('password')
     
     # Query Supabase for the user
-    # Note: we use eq. for exact match in PostgREST
     res = requests.get(
         f"{SUPABASE_URL}/rest/v1/users?username=eq.{username}&password=eq.{password}",
         headers=HEADERS
@@ -45,28 +44,21 @@ def login():
         if len(users) > 0:
             return jsonify({"success": True, "user": users[0]['username']})
             
-    return jsonify({"success": False, "message": "Invalid credentials"}), 401
+    return jsonify({"success": False, "message": "Invalid username or password"}), 401
 
 @app.route('/api/signup', methods=['POST'])
 def signup():
     data = request.json
-    username = data.get('username')
-    email = data.get('email')
+    username = data.get('username', '').lower().strip()
+    email = data.get('email', '').lower().strip()
     password = data.get('password')
     
     if not (username and email and password):
         return jsonify({"success": False, "message": "Missing fields"}), 400
         
-    # First, check if user exists
-    check_res = requests.get(
-        f"{SUPABASE_URL}/rest/v1/users?or=(username.eq.{username},email.eq.{email})",
-        headers=HEADERS
-    )
-    if check_res.status_code == 200 and len(check_res.json()) > 0:
-        return jsonify({"success": False, "message": "Username or email already exists"}), 400
-
-    # Insert new user
-    insert_res = requests.post(f"{SUPABASE_URL}/rest/v1/users", headers={**HEADERS, "Prefer": "return=minimal"}, json={
+    # Insert new user - pre-check is skipped to avoid RLS read-access issues
+    # Supabase unique constraints (23505) will trigger an error if user exists
+    insert_res = requests.post(f"{SUPABASE_URL}/rest/v1/users", headers={**HEADERS, "Prefer": "return=representation"}, json={
         "username": username,
         "email": email,
         "password": password
@@ -74,8 +66,13 @@ def signup():
     
     if insert_res.status_code in (200, 201):
         return jsonify({"success": True, "user": username})
+    
+    # Handle duplicate key error 23505
+    err_data = insert_res.json()
+    if err_data.get('code') == '23505':
+        return jsonify({"success": False, "message": "Username or email already exists"}), 409
         
-    return jsonify({"success": False, "message": "Failed to create user"}), 500
+    return jsonify({"success": False, "message": err_data.get('message', "Failed to create user")}), insert_res.status_code
 
 @app.route('/api/checkout', methods=['POST'])
 def checkout():
@@ -90,10 +87,10 @@ def checkout():
     orders_to_insert = []
     for item in cart:
         orders_to_insert.append({
-            "username": username,
+            "username": username.lower().strip(),
             "product_name": item['name'],
-            "price": item['price'],
-            "quantity": item['quantity'],
+            "price": float(item['price']),
+            "quantity": int(item['quantity']),
             "order_type": order_type,
             "status": 'baking',
             "custom_details": item.get('details', '')

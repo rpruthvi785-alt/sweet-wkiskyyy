@@ -55,7 +55,8 @@ const state = {
     cart: JSON.parse(localStorage.getItem('bakery-cart')) || [],
     user: localStorage.getItem('bakery-user') || null,
     products: [],
-    filter: 'all'
+    filter: 'all',
+    checkoutAfterAuth: false
 };
 
 /*=============== SUPABASE DB CONFIG ===============*/
@@ -70,61 +71,80 @@ const HEADERS = {
 const db = {
     async signup(username, email, password) {
         try {
-            const checkRes = await fetch(`${SUPABASE_URL}/users?or=(username.eq.${username},email.eq.${email})`, { headers: HEADERS });
-            const existing = await checkRes.json();
-            if (existing.length > 0) return { success: false, message: 'Username or email already exists' };
+            const normalizedUsername = username.toLowerCase().trim();
+            const normalizedEmail = email.toLowerCase().trim();
 
             const res = await fetch(`${SUPABASE_URL}/users`, {
                 method: 'POST',
                 headers: { ...HEADERS, 'Prefer': 'return=representation' },
-                body: JSON.stringify({ username, email, password })
+                body: JSON.stringify({ 
+                    username: normalizedUsername, 
+                    email: normalizedEmail, 
+                    password 
+                })
             });
-            if (res.ok) return { success: true, user: username };
-            return { success: false, message: 'Error creating account' };
+
+            if (res.ok) return { success: true, user: normalizedUsername };
+            
+            const err = await res.json();
+            if (err.code === '23505') {
+                if (err.message.includes('username')) return { success: false, message: 'Username already exists' };
+                if (err.message.includes('email')) return { success: false, message: 'Email already registered' };
+            }
+            return { success: false, message: err.message || 'Error creating account' };
         } catch (e) {
-            return { success: false, message: 'Network error' };
+            return { success: false, message: 'Network error. Please try again.' };
         }
     },
 
     async login(username, password) {
         try {
-            const res = await fetch(`${SUPABASE_URL}/users?username=eq.${username}&password=eq.${password}`, { headers: HEADERS });
+            const normalizedUsername = username.toLowerCase().trim();
+            const res = await fetch(`${SUPABASE_URL}/users?username=eq.${normalizedUsername}&password=eq.${password}`, { headers: HEADERS });
+            if (!res.ok) throw new Error('Query failed');
+            
             const users = await res.json();
-            if (users.length > 0) return { success: true, user: username };
+            if (users.length > 0) return { success: true, user: users[0].username };
             return { success: false, message: 'Invalid username or password' };
         } catch (e) {
-            return { success: false, message: 'Network error' };
+            return { success: false, message: 'Unable to connect to login server.' };
         }
     },
 
     async checkout(username, cart, orderType) {
         try {
+            if (!cart || cart.length === 0) return { success: false, message: 'Cart is empty' };
+            
             const now = new Date().toISOString();
             const orders = cart.map(item => ({
-                username,
+                username: username.toLowerCase().trim(),
                 product_name: item.name,
-                price: item.price,
-                quantity: item.quantity,
+                price: parseFloat(item.price),
+                quantity: parseInt(item.quantity),
                 order_type: orderType,
                 status: 'baking',
                 ordered_at: now,
                 custom_details: item.details || ''
             }));
+
             const res = await fetch(`${SUPABASE_URL}/orders`, {
                 method: 'POST',
                 headers: { ...HEADERS, 'Prefer': 'return=minimal' },
                 body: JSON.stringify(orders)
             });
+
             if (res.ok) return { success: true };
-            return { success: false, message: 'Checkout failed on server' };
+            const err = await res.json();
+            return { success: false, message: err.message || 'Payment processing failed' };
         } catch (e) {
-            return { success: false, message: 'Network error' };
+            return { success: false, message: 'Network error during checkout.' };
         }
     },
 
     async history(username) {
         try {
-            const res = await fetch(`${SUPABASE_URL}/orders?username=eq.${username}&order=ordered_at.desc`, { headers: HEADERS });
+            const normalizedUsername = username.toLowerCase().trim();
+            const res = await fetch(`${SUPABASE_URL}/orders?username=eq.${normalizedUsername}&order=ordered_at.desc`, { headers: HEADERS });
             if (res.ok) return await res.json();
             return [];
         } catch (e) {
@@ -508,6 +528,16 @@ loginForm.addEventListener('submit', async (e) => {
         updateAuthUI();
         closeModal(loginModal);
         loginForm.reset();
+        
+        // Auto-resume checkout if pending
+        if (state.checkoutAfterAuth) {
+            state.checkoutAfterAuth = false;
+            openModal(cartModal);
+            setTimeout(() => {
+                const checkoutBtn = document.getElementById('btn-checkout');
+                if (checkoutBtn) checkoutBtn.click();
+            }, 500);
+        }
     } else {
         loginError.textContent = result.message;
         loginError.style.display = 'block';
@@ -545,6 +575,16 @@ signupForm.addEventListener('submit', async (e) => {
         closeModal(signupModal);
         signupForm.reset();
         alert('Account created successfully!');
+
+        // Auto-resume checkout if pending
+        if (state.checkoutAfterAuth) {
+            state.checkoutAfterAuth = false;
+            openModal(cartModal);
+            setTimeout(() => {
+                const checkoutBtn = document.getElementById('btn-checkout');
+                if (checkoutBtn) checkoutBtn.click();
+            }, 500);
+        }
     } else {
         signupError.textContent = result.message;
         signupError.style.display = 'block';
@@ -554,9 +594,10 @@ signupForm.addEventListener('submit', async (e) => {
 btnCheckout.addEventListener('click', async () => {
     if (state.cart.length === 0) return alert('Your cart is empty.');
     if (!state.user) {
-        alert('Please sign in to place an order.');
+        state.checkoutAfterAuth = true;
         closeModal(cartModal);
         openModal(loginModal);
+        alert('Please sign in to complete your purchase.');
         return;
     }
 

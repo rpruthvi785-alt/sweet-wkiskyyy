@@ -1,0 +1,2 @@
+﻿SIGNUP: 201
+[{"id":9,"username":"freshuser1","email":"fresh1@test.com","password":"pass123"}]

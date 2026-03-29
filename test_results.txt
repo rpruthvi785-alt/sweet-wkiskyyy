@@ -1,0 +1,6 @@
+﻿SIGNUP: 201 - [{"id":7,"username":"testuser100","email":"test100@test.com","password":"pass123"}]
+LOGIN: 200 - [{"id":7,"username":"testuser100","email":"test100@test.com","password":"pass123"}]
+CHECKOUT: 409 - {"code":"23505","details":"Key (id)=(5) already exists.","hint":null,"message":"duplicate key value violates unique constraint \"orders_pkey\""}
+HISTORY: 200 - []
+PRODUCTS: 200 - [{"id":1,"name":"Classic Vanilla Sponge","category":"cakes","description":"Light and airy layers filled with homemade strawberry jam and fresh vanilla bean whipped cream.","price":35,"image_path":"ass
+DUP_CHECK: 200 - [{"id":7,"username":"testuser100","email":"test100@test.com","password":"pass123"}]
