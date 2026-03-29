@@ -29,7 +29,6 @@ navLink.forEach(n => n.addEventListener('click', linkAction))
 /*=============== CHANGE BACKGROUND HEADER ===============*/
 const scrollHeader = () =>{
     const header = document.getElementById('header')
-    // When the scroll is greater than 50 viewport height, add the scroll-header class to the header tag
     if(window.scrollY >= 50) header.classList.add('scroll-header') 
     else header.classList.remove('scroll-header')
 }
@@ -38,12 +37,10 @@ window.addEventListener('scroll', scrollHeader)
 /*=============== SCROLL REVEAL ANIMATION ===============*/
 function reveal() {
     var reveals = document.querySelectorAll(".reveal");
-  
     for (var i = 0; i < reveals.length; i++) {
         var windowHeight = window.innerHeight;
         var elementTop = reveals[i].getBoundingClientRect().top;
-        var elementVisible = 100; // Trigger distance
-        
+        var elementVisible = 100;
         if (elementTop < windowHeight - elementVisible) {
             reveals[i].classList.add("active");
         }
@@ -51,7 +48,7 @@ function reveal() {
 }
 
 window.addEventListener("scroll", reveal);
-window.addEventListener("load", reveal); // Trigger on load for elements already in view
+window.addEventListener("load", reveal); 
 
 /*=============== STATE MANAGEMENT ===============*/
 const state = {
@@ -61,35 +58,49 @@ const state = {
     filter: 'all'
 };
 
-/*=============== LOCAL STORAGE DB (works on GitHub Pages) ===============*/
+/*=============== SUPABASE DB CONFIG ===============*/
+const SUPABASE_URL = 'https://ojhenudsmcvuiobpcqsv.supabase.co/rest/v1';
+const SUPABASE_KEY = 'sb_publishable_jtGvrWNZ5moIkQj1HwoWQQ_W5nFMfjE';
+const HEADERS = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Content-Type': 'application/json'
+};
+
 const db = {
-    getUsers: () => JSON.parse(localStorage.getItem('bakery-users') || '{}'),
-    saveUsers: (u) => localStorage.setItem('bakery-users', JSON.stringify(u)),
-    getOrders: () => JSON.parse(localStorage.getItem('bakery-orders') || '[]'),
-    saveOrders: (o) => localStorage.setItem('bakery-orders', JSON.stringify(o)),
+    async signup(username, email, password) {
+        try {
+            const checkRes = await fetch(`${SUPABASE_URL}/users?or=(username.eq.${username},email.eq.${email})`, { headers: HEADERS });
+            const existing = await checkRes.json();
+            if (existing.length > 0) return { success: false, message: 'Username or email already exists' };
 
-    signup(username, email, password) {
-        const users = this.getUsers();
-        if (users[username]) return { success: false, message: 'Username already exists' };
-        const byEmail = Object.values(users).find(u => u.email === email);
-        if (byEmail) return { success: false, message: 'Email already registered' };
-        users[username] = { email, password };
-        this.saveUsers(users);
-        return { success: true, user: username };
+            const res = await fetch(`${SUPABASE_URL}/users`, {
+                method: 'POST',
+                headers: { ...HEADERS, 'Prefer': 'return=representation' },
+                body: JSON.stringify({ username, email, password })
+            });
+            if (res.ok) return { success: true, user: username };
+            return { success: false, message: 'Error creating account' };
+        } catch (e) {
+            return { success: false, message: 'Network error' };
+        }
     },
 
-    login(username, password) {
-        const users = this.getUsers();
-        if (!users[username] || users[username].password !== password)
+    async login(username, password) {
+        try {
+            const res = await fetch(`${SUPABASE_URL}/users?username=eq.${username}&password=eq.${password}`, { headers: HEADERS });
+            const users = await res.json();
+            if (users.length > 0) return { success: true, user: username };
             return { success: false, message: 'Invalid username or password' };
-        return { success: true, user: username };
+        } catch (e) {
+            return { success: false, message: 'Network error' };
+        }
     },
 
-    checkout(username, cart, orderType) {
-        const orders = this.getOrders();
-        const now = new Date().toISOString();
-        cart.forEach(item => {
-            orders.push({
+    async checkout(username, cart, orderType) {
+        try {
+            const now = new Date().toISOString();
+            const orders = cart.map(item => ({
                 username,
                 product_name: item.name,
                 price: item.price,
@@ -98,16 +109,27 @@ const db = {
                 status: 'baking',
                 ordered_at: now,
                 custom_details: item.details || ''
+            }));
+            const res = await fetch(`${SUPABASE_URL}/orders`, {
+                method: 'POST',
+                headers: { ...HEADERS, 'Prefer': 'return=minimal' },
+                body: JSON.stringify(orders)
             });
-        });
-        this.saveOrders(orders);
-        return { success: true };
+            if (res.ok) return { success: true };
+            return { success: false, message: 'Checkout failed on server' };
+        } catch (e) {
+            return { success: false, message: 'Network error' };
+        }
     },
 
-    history(username) {
-        return this.getOrders()
-            .filter(o => o.username === username)
-            .sort((a, b) => new Date(b.ordered_at) - new Date(a.ordered_at));
+    async history(username) {
+        try {
+            const res = await fetch(`${SUPABASE_URL}/orders?username=eq.${username}&order=ordered_at.desc`, { headers: HEADERS });
+            if (res.ok) return await res.json();
+            return [];
+        } catch (e) {
+            return [];
+        }
     }
 };
 
@@ -153,7 +175,7 @@ const openModal = (modal) => modal.classList.add('show-modal');
 const closeModal = (modal) => modal.classList.remove('show-modal');
 
 /*=============== UI UPDATES ===============*/
-function updateAuthUI() {
+async function updateAuthUI() {
     if (state.user) {
         btnLogin.textContent = `Hi, ${state.user}`;
         btnLogin.style.pointerEvents = 'none';
@@ -161,7 +183,7 @@ function updateAuthUI() {
         btnHistory.style.display = 'block';
         document.getElementById('tracking-login-prompt').style.display = 'none';
         document.getElementById('tracking-display').style.display = 'block';
-        updateTrackingUI();
+        await updateTrackingUI();
     } else {
         btnLogin.textContent = "Sign In";
         btnLogin.style.pointerEvents = 'auto';
@@ -172,11 +194,12 @@ function updateAuthUI() {
     }
 }
 
-function updateHistoryUI() {
+async function updateHistoryUI() {
     if (!state.user) return;
-    const history = db.history(state.user);
+    historyItemsContainer.innerHTML = '<p style="text-align: center; padding: 1rem;">Loading...</p>';
+    const history = await db.history(state.user);
     if (history.length === 0) {
-        historyItemsContainer.innerHTML = '<p style="color: gray; text-align: center; padding: 1rem;">No history found yet. Time to buy some cake!</p>';
+        historyItemsContainer.innerHTML = '<p style="color: gray; text-align: center; padding: 1rem;">No history found. Time to buy some cake!</p>';
     } else {
         historyItemsContainer.innerHTML = history.map(item => `
             <div class="history-item" style="padding: 1rem; border-bottom: 1px solid #eee;">
@@ -192,9 +215,9 @@ function updateHistoryUI() {
     }
 }
 
-function updateTrackingUI() {
+async function updateTrackingUI() {
     if (!state.user) return;
-    const history = db.history(state.user);
+    const history = await db.history(state.user);
     const trackingDisplay = document.getElementById('tracking-display');
 
     if (history.length === 0) {
@@ -274,7 +297,6 @@ function updateCartUI() {
             cartItemsContainer.insertAdjacentHTML('beforeend', cartItemHTML);
         });
 
-        // Event listeners for cart buttons
         document.querySelectorAll('.btn-qty-decrease').forEach(btn => {
             btn.onclick = (e) => {
                 const idx = parseInt(e.target.getAttribute('data-index'));
@@ -307,6 +329,11 @@ function updateCartUI() {
 function renderProducts() {
     const filtered = state.products.filter(p => state.filter === 'all' || p.category === state.filter);
     
+    if (filtered.length === 0) {
+        menuGrid.innerHTML = '<p style="text-align:center; color:gray; padding:2rem; width:100%;">No products found in the database.</p>';
+        return;
+    }
+
     menuGrid.innerHTML = filtered.map((product, index) => `
         <article class="menu-item reveal" data-category="${product.category}" style="display: block;">
             <div class="menu-img-wrapper" style="background-color: #f3f3f3;">
@@ -317,7 +344,7 @@ function renderProducts() {
                 <h3 class="menu-title">${product.name}</h3>
                 <p class="menu-desc">${product.description}</p>
                 <div class="menu-footer">
-                    <span class="menu-price">$${product.price.toFixed(2)}</span>
+                    <span class="menu-price">$${Number(product.price).toFixed(2)}</span>
                     <button type="button" class="btn btn-sm btn-primary add-to-cart-btn" 
                         data-name="${product.name}" data-price="${product.price}">Add to Cart</button>
                 </div>
@@ -325,7 +352,6 @@ function renderProducts() {
         </article>
     `).join('');
 
-    // Re-attach add-to-cart listeners
     document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
         btn.onclick = () => {
             const name = btn.getAttribute('data-name');
@@ -340,22 +366,36 @@ function renderProducts() {
         };
     });
 
-    reveal(); // Re-trigger reveal for new elements
+    reveal();
 }
 
 /*=============== DATA FETCHING ===============*/
 async function fetchProducts() {
     try {
-        const response = await fetch('products.json');
-        state.products = await response.json();
-        renderProducts();
+        // Retrieve products directly from Supabase!
+        const response = await fetch(`${SUPABASE_URL}/products?order=id.asc`, { headers: HEADERS });
+        if (response.ok) {
+            state.products = await response.json();
+            renderProducts();
+            reveal();
+            setTimeout(reveal, 200);
+        } else {
+            throw new Error(`Supabase returned ${response.status}`);
+        }
     } catch (err) {
         console.error("Failed to fetch products:", err);
+        // Fallback to local JSON if supabase fails/has no tables
+        try {
+            const fallbackRes = await fetch('products.json');
+            state.products = await fallbackRes.json();
+            renderProducts();
+        } catch (e) {
+            if (menuGrid) menuGrid.innerHTML = '<p style="text-align:center; color:gray; padding:2rem; width:100%;">Unable to load products. Have you connected to Supabase yet?</p>';
+        }
     }
 }
 
 /*=============== EVENT LISTENERS ===============*/
-// Filter logic
 filterBtns.forEach(btn => {
     btn.addEventListener('click', () => {
         filterBtns.forEach(b => {
@@ -370,7 +410,6 @@ filterBtns.forEach(btn => {
     });
 });
 
-// Auth Handlers
 btnLogin.addEventListener('click', () => { if (!state.user) openModal(loginModal); });
 btnLogout.addEventListener('click', () => {
     state.user = null;
@@ -378,9 +417,9 @@ btnLogout.addEventListener('click', () => {
     updateAuthUI();
 });
 btnCart.addEventListener('click', () => openModal(cartModal));
-btnHistory.addEventListener('click', () => {
-    updateHistoryUI();
+btnHistory.addEventListener('click', async () => {
     openModal(historyModal);
+    await updateHistoryUI();
 });
 
 closeLogin.addEventListener('click', () => closeModal(loginModal));
@@ -390,26 +429,24 @@ closeHistory.addEventListener('click', () => closeModal(historyModal));
 btnCloseHistoryUI.addEventListener('click', () => closeModal(historyModal));
 if (closeCustom) closeCustom.addEventListener('click', () => closeModal(customModal));
 if (btnMakeOwn) btnMakeOwn.addEventListener('click', () => openModal(customModal));
+
 if (customCakeForm) {
     const updateCustomPrice = () => {
         const flavorPrice = parseFloat(document.getElementById('custom-flavor').selectedOptions[0].getAttribute('data-price'));
         const sizeMultiplier = parseFloat(document.getElementById('custom-size').selectedOptions[0].getAttribute('data-multiplier'));
-        
         let extras = 0;
         document.querySelectorAll('input[name="topping"]:checked').forEach(cb => {
             extras += parseFloat(cb.getAttribute('data-price'));
         });
-        
         const frostingPrice = parseFloat(document.querySelector('input[name="frosting"]:checked').getAttribute('data-price'));
         extras += frostingPrice;
-        
         const totalPrice = (flavorPrice * sizeMultiplier) + extras;
         customPriceDisplay.textContent = totalPrice.toFixed(2);
         return totalPrice;
     };
 
     customCakeForm.addEventListener('change', updateCustomPrice);
-    btnMakeOwn.addEventListener('click', updateCustomPrice); // Initial price set
+    btnMakeOwn.addEventListener('click', updateCustomPrice);
 
     customCakeForm.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -450,14 +487,21 @@ window.addEventListener('click', (e) => {
     if (e.target === customModal) closeModal(customModal);
 });
 
-// Forms
-loginForm.addEventListener('submit', (e) => {
+loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const btnSubmit = loginForm.querySelector('button[type="submit"]');
+    btnSubmit.textContent = "Loading...";
+    btnSubmit.disabled = true;
+    
     const username = document.getElementById('login-username').value.trim();
     const password = document.getElementById('login-password').value;
     loginError.style.display = 'none';
 
-    const result = db.login(username, password);
+    const result = await db.login(username, password);
+    
+    btnSubmit.textContent = "Sign In";
+    btnSubmit.disabled = false;
+
     if (result.success) {
         state.user = result.user;
         localStorage.setItem('bakery-user', state.user);
@@ -470,8 +514,12 @@ loginForm.addEventListener('submit', (e) => {
     }
 });
 
-signupForm.addEventListener('submit', (e) => {
+signupForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const btnSubmit = signupForm.querySelector('button[type="submit"]');
+    btnSubmit.textContent = "Loading...";
+    btnSubmit.disabled = true;
+
     const username = document.getElementById('signup-username').value.trim();
     const email = document.getElementById('signup-email').value.trim();
     const password = document.getElementById('signup-password').value;
@@ -480,10 +528,16 @@ signupForm.addEventListener('submit', (e) => {
     if (!username || !email || !password) {
         signupError.textContent = 'All fields are required.';
         signupError.style.display = 'block';
+        btnSubmit.textContent = "Create Account";
+        btnSubmit.disabled = false;
         return;
     }
 
-    const result = db.signup(username, email, password);
+    const result = await db.signup(username, email, password);
+    
+    btnSubmit.textContent = "Create Account";
+    btnSubmit.disabled = false;
+
     if (result.success) {
         state.user = result.user;
         localStorage.setItem('bakery-user', state.user);
@@ -497,7 +551,7 @@ signupForm.addEventListener('submit', (e) => {
     }
 });
 
-btnCheckout.addEventListener('click', () => {
+btnCheckout.addEventListener('click', async () => {
     if (state.cart.length === 0) return alert('Your cart is empty.');
     if (!state.user) {
         alert('Please sign in to place an order.');
@@ -506,25 +560,30 @@ btnCheckout.addEventListener('click', () => {
         return;
     }
 
+    btnCheckout.textContent = "Processing...";
+    btnCheckout.disabled = true;
+
     const orderType = document.querySelector('input[name="order-type"]:checked').value;
-    const result = db.checkout(state.user, state.cart, orderType);
+    const result = await db.checkout(state.user, state.cart, orderType);
+
+    btnCheckout.textContent = "Checkout Now";
+    btnCheckout.disabled = false;
 
     if (result.success) {
         state.cart = [];
         updateCartUI();
-        updateTrackingUI();
+        await updateTrackingUI();
         closeModal(cartModal);
         openModal(confirmModal);
 
-        // SIMULATOR: Auto-refresh every second for 35s to show countdown and final state
         let ticks = 0;
-        const liveRefresh = setInterval(() => {
-            updateTrackingUI();
+        const liveRefresh = setInterval(async () => {
+            await updateTrackingUI();
             ticks++;
             if (ticks > 35) clearInterval(liveRefresh);
         }, 1000);
     } else {
-        alert('Checkout failed. Please try again.');
+        alert('Checkout failed: ' + (result.message || 'Please try again.'));
     }
 });
 

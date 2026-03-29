@@ -1,0 +1,16 @@
+1: assets/images/vanilla.png
+2: assets/images/carrot.png
+3: assets/images/brownies.png
+4: assets/images/red_velvet.png
+5: assets/images/lemon_drizzle.png
+6: assets/images/black_forest.png
+7: assets/images/cookie.png
+8: assets/images/croissant.png
+9: assets/images/fruit_tart.png
+10: assets/images/panna_cotta.png
+11: assets/images/wild_berry_scone.png
+12: assets/images/savory_spinach___feta.png
+13: assets/images/glazed_cinnamon_roll.png
+14: assets/images/savory_cheese_straws.png
+15: assets/images/tiramisu.png
+16: assets/images/assorted_macaron_set.png
